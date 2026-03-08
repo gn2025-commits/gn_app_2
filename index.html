@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IPA用語クイズ（4択）</title>
+  <style>
+    :root {
+      --bg: #0f172a;      /* slate-900 */
+      --panel: #111827;   /* gray-900 */
+      --text: #e5e7eb;    /* gray-200 */
+      --muted: #9ca3af;   /* gray-400 */
+      --brand: #06b6d4;   /* cyan-500 */
+      --ok: #16a34a;      /* green-600 */
+      --ng: #ef4444;      /* red-500 */
+      --opt: #1f2937;     /* gray-800 */
+      --optHover: #374151;/* gray-700 */
+      --border: #334155;  /* slate-700 */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 960px; margin: 24px auto; padding: 16px;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .grow { flex: 1 1 auto; }
+    button, .btn {
+      background: var(--brand); color: #00212a; font-weight: 700; border: none;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ghost {
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+    }
+    .opt {
+      width: 100%; text-align: left; background: var(--opt); color: var(--text);
+      padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .opt:hover { background: var(--optHover); }
+    .opt.correct { border-color: var(--ok); box-shadow: 0 0 0 2px color-mix(in oklab, var(--ok) 40%, transparent); }
+    .opt.wrong { border-color: var(--ng); box-shadow: 0 0 0 2px color-mix(in oklab, var(--ng) 40%, transparent); }
+    .opt.disabled { pointer-events: none; opacity: 0.9; }
+    .term {
+      font-weight: 800; font-size: 20px; letter-spacing: .02em;
+    }
+    .badge {
+      display: inline-block; padding: 3px 8px; border: 1px solid var(--border);
+      border-radius: 999px; font-size: 12px; color: var(--muted);
+    }
+    .feedback { margin-top: 8px; }
+    .ok { color: var(--ok); font-weight: 800; }
+    .ng { color: var(--ng); font-weight: 800; }
+    .progress {
+      height: 8px; background: #0b1220; border-radius: 999px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .bar { height: 100%; background: var(--brand); width: 0%; transition: width .25s ease; }
+    details summary { cursor: pointer; }
+    .small { font-size: 12px; }
+    .right { text-align: right; }
+    .grid { display: grid; gap: 10px; }
+    @media (min-width: 720px) {
+      .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    }
+    .footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>IPA用語クイズ（4択）</h1>
+        <div class="muted">10問／回・選択後に正誤表示・履歴保存</div>
+      </div>
+      <div class="row">
+        <button id="btn-history" class="ghost">履歴を見る</button>
+        <button id="btn-reset" class="ghost">リセット</button>
+      </div>
+    </header>
+
+    <!-- スタート -->
+    <div id="screen-start" class="card">
+      <div class="grid cols-2">
+        <div>
+          <div style="font-size:18px;font-weight:700;">クイズを開始</div>
+          <p class="muted">「開始」ボタンを押すと、ランダムに10問出題します。</p>
+        </div>
+        <div class="row right">
+          <label for="count" class="muted">出題数</label>
+          <input id="count" type="number" min="5" max="30" value="10" style="width:90px;background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;">
+          <button id="btn-start">開始</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- クイズ -->
+    <div id="screen-quiz" class="card" style="display:none;">
+      <div class="row" style="justify-content:space-between;">
+        <div class="badge"><span id="q-index">1</span> / <span id="q-total">10</span></div>
+        <div class="badge">スコア: <span id="score">0</span></div>
+      </div>
+
+      <div class="progress" style="margin:10px 0 16px;">
+        <div id="bar" class="bar"></div>
+      </div>
+
+      <div id="q-term" class="term">（用語）</div>
+      <div class="muted small">※意味として正しいものを1つ選んでください</div>
+
+      <div id="options" class="grid" style="margin-top:10px;"></div>
+
+      <div id="feedback" class="feedback"></div>
+
+      <div class="row right" style="margin-top:10px;">
+        <button id="btn-next" disabled>次へ</button>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div id="screen-result" class="card" style="display:none;">
+      <div style="font-size:18px;font-weight:800;">結果</div>
+      <p>スコア：<span id="final-score">0</span> / <span id="final-total">10</span></p>
+      <div id="result-detail" class="grid"></div>
+      <div class="row right" style="margin-top:10px;">
+        <button id="btn-retry">もう一度</button>
+        <button id="btn-open-history" class="ghost">履歴を見る</button>
+      </div>
+      <div class="footer">※結果はローカルに保存されます（この端末のこのブラウザのみ）。</div>
+    </div>
+
+    <!-- 履歴 -->
+    <div id="screen-history" class="card" style="display:none;">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div style="font-size:18px;font-weight:800;">履歴</div>
+        <div class="row">
+          <button id="btn-close-history" class="ghost">閉じる</button>
+          <button id="btn-clear-history" class="ghost">履歴を削除</button>
+        </div>
+      </div>
+      <div id="history-list" class="grid" style="margin-top:10px;"></div>
+      <div class="muted small">※クラウドに同期する場合は Amplify 連携をご検討ください。</div>
+    </div>
+
+    <div class="footer">
+      コードはプレーンな HTML/CSS/JS。用語は <code>app.js</code> の配列で編集できます。
+    </div>
+  </div>
+
+  <!-- 外部JSファイルを読み込み -->
+  <script src="./app.js"></script>
+</body>
+</html>
