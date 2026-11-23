@@ -1,23 +1,3 @@
-// 2026-11-24
-import { Amplify } from "aws-amplify";
-import { generateClient } from "aws-amplify/data";
-
-import outputs from "./amplify_outputs.json";
-
-Amplify.configure(outputs);
-
-const client = generateClient();
-
-//　2026-11-24Cognitoログイン
-import { signInWithRedirect } from "aws-amplify/auth";
-
-document
-  .getElementById("loginBtn")
-  .addEventListener("click", async () => {
-
-    await signInWithRedirect();
-});
-
 // ==============================
 // IPA用語データ（用語 → 定義）
 // 必要に応じて追加・修正してください
